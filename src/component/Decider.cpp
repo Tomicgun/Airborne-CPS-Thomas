@@ -1,5 +1,6 @@
 #include "Decider.h"
 
+
 Velocity const Decider::kMinGaugeVerticalVelocity_ = { -4000.0, Velocity::VelocityUnits::FEET_PER_MIN };
 Velocity const Decider::kMaxGaugeVerticalVelocity_ = { 4000.0, Velocity::VelocityUnits::FEET_PER_MIN };
 
@@ -16,12 +17,15 @@ Distance const Decider::kAltitudeAlim600Threshold_ = { 20000.0, Distance::Distan
 
 Velocity const Decider::kVerticalVelocityClimbDescendDelta_ = { 1500.0, Velocity::VelocityUnits::FEET_PER_MIN };
 
+//constructor
 Decider::Decider(Aircraft* thisAircraft, concurrency::concurrent_unordered_map<std::string, ResolutionConnection*>* map) : thisAircraft_(thisAircraft), activeConnections_(map) {}
 
+//first class function that call determine action required
 void Decider::analyze(Aircraft* intruder) {
 	Decider::determineActionRequired(intruder);
 }
 
+//given a threat class return a string version of that threat class
 std::string Decider::getThreatClassStr(Aircraft::ThreatClassification threatClass) {
 	switch (threatClass) {
 	case Aircraft::ThreatClassification::NON_THREAT_TRAFFIC:
@@ -37,6 +41,7 @@ std::string Decider::getThreatClassStr(Aircraft::ThreatClassification threatClas
 	}
 }
 
+//determine to go up or down to resolve threat, called in the analyze method
 void Decider::determineActionRequired(Aircraft* intruder) {
 	intruder->lock.lock();
 	Aircraft intrCopy = *(intruder);
@@ -48,6 +53,7 @@ void Decider::determineActionRequired(Aircraft* intruder) {
 
 	RecommendationRangePair recRange;
 
+	//if determined threat class equals resolution advisory then determine resolution
 	if (threatClass == Aircraft::ThreatClassification::RESOLUTION_ADVISORY) {
 		connection->lock.lock();
 		if (connection->consensusAchieved && (connection->currentSense == Sense::UPWARD || connection->currentSense == Sense::DOWNWARD)) {
@@ -59,6 +65,7 @@ void Decider::determineActionRequired(Aircraft* intruder) {
 		}
 		connection->lock.unlock();
 
+		//getting / determine data about the intruder and center of gauge
 		double userDeltaPosM = connection->userPosition.range(&connection->userPositionOld).toMeters();
 		double userDeltaAltM = connection->userPosition.altitude.toMeters() - connection->userPositionOld.altitude.toMeters();
 		double intrDeltaPosM = intrCopy.positionCurrent.range(&intrCopy.positionOld).toMeters();
@@ -74,6 +81,7 @@ void Decider::determineActionRequired(Aircraft* intruder) {
 		double rangeTauS = getModTauS(slantRangeNmi, closingSpeedKnots, getRADmodNmi(connection->userPosition.altitude.toFeet()));
 		recRange = getRecRangePair(mySense, userVvel.toFeetPerMin(), intrVvel.toFeetPerMin(), connection->userPosition.altitude.toFeet(), intrCopy.positionCurrent.altitude.toFeet(), rangeTauS);
 
+	//if its not a threat then ignore it
 	} else if (threatClass == Aircraft::ThreatClassification::NON_THREAT_TRAFFIC) {
 		tempSense_ = Sense::UNKNOWN;
 		connection->lock.lock();
@@ -94,36 +102,72 @@ void Decider::determineActionRequired(Aircraft* intruder) {
 	intruder->lock.unlock();
 }
 
+//called in determine resolution use to classify a threat
 Aircraft::ThreatClassification Decider::determineThreatClass(Aircraft* intrCopy, ResolutionConnection* conn) {
 	conn->lock.lock();
+
+	//lla in units folder its a unit
 	LLA userPosition = conn->userPosition;
 	LLA userPositionOld = conn->userPositionOld;
 	std::chrono::milliseconds userPositionTime = conn->userPositionTime;
 	std::chrono::milliseconds userPositionOldTime = conn->userPositionOldTime;
 	conn->lock.unlock();
-	Aircraft::ThreatClassification prevThreatClass = intrCopy->threatClassification;
+
+	Aircraft::ThreatClassification prevThreatClass = intrCopy->threatClassification; //get previous threat class
+
+	//get abs value of range between threat and user pos and convert it to units NMI
 	double slantRangeNmi = abs(userPosition.range(&intrCopy->positionCurrent).toUnits(Distance::DistanceUnits::NMI));
+
+	//get abs delta distance between user and threat almost velocity
 	double deltaDistanceM = abs(userPositionOld.range(&intrCopy->positionOld).toUnits(Distance::DistanceUnits::METERS))
 		- abs(userPosition.range(&intrCopy->positionCurrent).toUnits(Distance::DistanceUnits::METERS));
+
+	//finding how much elapsed time has occurred
 	double elapsedTimeS = (double)(intrCopy->positionCurrentTime - intrCopy->positionOldTime).count() / 1000;
+
+	//taking change in distance divided by time giving us velocity which is thena converted to knots
 	double closingSpeedKnots = Velocity(deltaDistanceM / elapsedTimeS, Velocity::VelocityUnits::METERS_PER_S).toUnits(Velocity::VelocityUnits::KNOTS);
+
+	//get difference of altitude in feet between target and user position
 	double altSepFt = abs(intrCopy->positionCurrent.altitude.toUnits(Distance::DistanceUnits::FEET) -
 		userPosition.altitude.toUnits(Distance::DistanceUnits::FEET));
+
+	//get the delta of altitude in feet
 	double deltaDistance2Ft = abs(intrCopy->positionOld.altitude.toUnits(Distance::DistanceUnits::FEET) -
 		userPositionOld.altitude.toUnits(Distance::DistanceUnits::FEET)) -
 		abs(intrCopy->positionCurrent.altitude.toUnits(Distance::DistanceUnits::FEET) -
 			userPosition.altitude.toUnits(Distance::DistanceUnits::FEET));
+
+	//get number of elapsed minutes
 	double elapsedTimeMin = elapsedTimeS / 60;
+
+	//get vertical velocity of intruder
 	double vertClosingSpdFtM = deltaDistance2Ft / elapsedTimeMin;
+
+	//time left before collision horizontal
 	double rangeTauS = slantRangeNmi / closingSpeedKnots * 3600;
+
+	//time left to collision vertical
 	double verticalTauS = altSepFt / vertClosingSpdFtM * 60;
+
+	//calculating and setting user velocity
 	Velocity userVelocity = Velocity(userPosition.range(&userPositionOld).toMeters() / ((userPositionTime.count() - userPositionOldTime.count()) / 1000), Velocity::VelocityUnits::METERS_PER_S);
+	
+	//calculating and setting intruder velocity
 	Velocity intrVelocity = Velocity(intrCopy->positionCurrent.range(&intrCopy->positionOld).toMeters() / ((intrCopy->positionCurrentTime.count() - intrCopy->positionOldTime.count()) / 1000), Velocity::VelocityUnits::METERS_PER_S);
+	
+	//setup two distance metrics one for user and intruder
 	Distance userDistanceByCpa = Distance(userVelocity.toMetersPerS() * rangeTauS, Distance::DistanceUnits::METERS);
 	Distance intrDistanceByCpa = Distance(intrVelocity.toMetersPerS() * rangeTauS, Distance::DistanceUnits::METERS);
+
+	//setup two longitude latitude object based of intruder and user position
 	LLA userPositionAtCpa = userPosition.translate(&userPositionOld.bearing(&userPosition), &userDistanceByCpa);
 	LLA intrPositionAtCpa = intrCopy->positionCurrent.translate(&intrCopy->positionOld.bearing(&intrCopy->positionCurrent), &intrDistanceByCpa);
+	
+	//range between user and intruders cpa
 	double distanceAtCpaFt = userPositionAtCpa.range(&intrPositionAtCpa).toFeet();
+
+	//really not sure
 	double taModTauS = getModTauS(slantRangeNmi, closingSpeedKnots, getTADmodNmi(userPosition.altitude.toFeet()));
 	double raModTauS = getModTauS(slantRangeNmi, closingSpeedKnots, getRADmodNmi(userPosition.altitude.toFeet()));
 
@@ -154,6 +198,8 @@ Aircraft::ThreatClassification Decider::determineThreatClass(Aircraft* intrCopy,
 	return newThreatClass;
 }
 
+//state machine
+//getting is TA has passed TA threshold 
 bool Decider::tauPassesTAThreshold(double altFt, double modTauS, double vertTauS, double vSepFt)
 {
 	if (vSepFt > getTAZthrFt(altFt)) {
@@ -188,7 +234,8 @@ bool Decider::tauPassesTAThreshold(double altFt, double modTauS, double vertTauS
 			return false;
 	}
 }
-
+//checking if TA has passed RA threshold
+//state machine
 bool Decider::tauPassesRAThreshold(double altFt, double modTauS, double vertTauS, double vSepFt)
 {
 	if (vSepFt > getRAZthrFt(altFt)) {
@@ -224,6 +271,8 @@ bool Decider::tauPassesRAThreshold(double altFt, double modTauS, double vertTauS
 	}
 }
 
+//determine whether to go up or down based if the user is above or below the intruder
+//state machine
 Sense Decider::determineResolutionSense(double userAltFt, double intrAltFt) {
 	if (userAltFt > intrAltFt)
 		return Sense::UPWARD;
@@ -231,6 +280,7 @@ Sense Decider::determineResolutionSense(double userAltFt, double intrAltFt) {
 		return Sense::DOWNWARD;
 }
 
+//not sure should ask bastion
 int Decider::getAlimFt(double altFt) {
 	if (altFt < 1000)
 		return -1;
@@ -242,6 +292,7 @@ int Decider::getAlimFt(double altFt) {
 		return 800;
 }
 
+//getting RA threshold in feat on the z axis
 int Decider::getRAZthrFt(double altFt) {
 	if (altFt < 1000)
 		return -1;
@@ -257,13 +308,15 @@ int Decider::getRAZthrFt(double altFt) {
 		return 700;
 }
 
+//get TA threshold on the z axis in feet
 int Decider::getTAZthrFt(double altFt) {
 	if (altFt < 42000)
 		return 850;
 	else
 		return 1200;
 }
-
+//really not sre TODO:figure it out
+//something in relation to RA and NMI
 double Decider::getRADmodNmi(double altFt) {
 	if (altFt < 1000)
 		return 0;
@@ -278,7 +331,7 @@ double Decider::getRADmodNmi(double altFt) {
 	else
 		return 1.1;
 }
-
+//something in realtion to RA and NMI
 double Decider::getTADmodNmi(double altFt) {
 	if (altFt < 1000)
 		return .3;
@@ -294,15 +347,18 @@ double Decider::getTADmodNmi(double altFt) {
 		return 1.3;
 }
 
+//getting some measurement 
 double Decider::getModTauS(double rangeNmi, double closureRateKnots, double dmodNmi) {
 	return ((pow(rangeNmi, 2) - pow(dmodNmi, 2)) / (rangeNmi * closureRateKnots)) * 3600;
 }
 
+//TODO:document this method
 RecommendationRangePair Decider::getRecRangePair(Sense sense, double userVvelFtPerM, double intrVvelFtPerM, double userAltFt,
 	double intrAltFt, double rangeTauS) {
 
 	RecommendationRange positive, negative;
 
+	//making sure sense and rangeTAUs have correct values
 	if (sense != Sense::UNKNOWN && rangeTauS > 0.0) {
 		double alimFt = getAlimFt(userAltFt);
 		double intrProjectedAltAtCpa = intrAltFt + intrVvelFtPerM * (rangeTauS / 60.0);
@@ -363,6 +419,7 @@ RecommendationRangePair Decider::getRecRangePair(Sense sense, double userVvelFtP
 	return RecommendationRangePair{ positive, negative };
 }
 
+//TODO:document this method
 double Decider::getVvelForAlim(Sense sense, double altFt, double vsepAtCpaFt, double intrProjAltFt, double rangeTauS) {
 	/*char toPrint[1000];
 	sprintf(toPrint, "Sense = %s, alt_ft = %f, vsep_at_cpa_ft = %f, intr_proj_alt_ft = %f, range_tau = %f\n", senseToString(sense), altFt, vsep_at_cpa_ft, intr_proj_alt_ft, range_tau_s);

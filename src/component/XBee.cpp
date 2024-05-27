@@ -3,6 +3,7 @@
 #pragma comment(lib,"WS2_32")
 
 
+//constructor
 XBee::XBee()
 {
 	bool isXBeeEnabled = false;
@@ -10,22 +11,25 @@ XBee::XBee()
 
 }
 
+//deconstructor does nothing
 XBee::~XBee()
 {
 	// Do something useful
 }
 
+//helper method setter
 void XBee::SetPortnum(unsigned int pnum)
 {
 	portnum = pnum;
 }
 
+//getter
 unsigned int XBee::GetPortNum() {
 	return portnum;
 }
 
 
-
+//used in transponder
 HANDLE XBee::InitializeComPort(unsigned int portnum) {
 	TCHAR gszPort[10];
 	_stprintf(gszPort, "COM%u", portnum);
@@ -87,6 +91,7 @@ HANDLE XBee::InitializeComPort(unsigned int portnum) {
 	return hComm;
 }
 
+//used in transponder
 bool XBee::XBeeReceive(HANDLE hComm, char* buf, int len) {
 
 	bool retVal = false;
@@ -165,6 +170,7 @@ bool XBee::XBeeReceive(HANDLE hComm, char* buf, int len) {
 	return retVal;
 }
 
+//helper method
 int XBee::ReadSerial(unsigned char* lpBuf, DWORD dwToWrite, HANDLE hComm) {
 	DWORD dwRead;
 	bool fWaitingOnRead = FALSE;
@@ -174,6 +180,7 @@ int XBee::ReadSerial(unsigned char* lpBuf, DWORD dwToWrite, HANDLE hComm) {
 	else { return 0; }
 }
 
+//used in transponder 
 DWORD XBee::XBeeBroadcast(std::string payload, HANDLE hComm) {
 
 	//bool exit = false;
@@ -250,6 +257,7 @@ DWORD XBee::XBeeBroadcast(std::string payload, HANDLE hComm) {
 	return 0;
 }
 
+//helper method used in broadcast method
 bool XBee::TransmitFrame(unsigned char* lpBuf, DWORD dwToWrite, HANDLE hComm)
 {
 	OVERLAPPED osWrite = { 0 };

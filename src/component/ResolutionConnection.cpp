@@ -1,5 +1,6 @@
 #include "ResolutionConnection.h"
 
+//this class is used extensively in decider,NASA decider, ArtHorizoGaugeRederer
 int ResolutionConnection::number_of_connections_ = 0;
 
 static DWORD WINAPI startResolutionReceiver(void* param)
@@ -14,6 +15,7 @@ static DWORD WINAPI startResolutionSender(void* param)
 	return rc->senseSender();
 }
 
+//constructor
 ResolutionConnection::ResolutionConnection(std::string const mmac, std::string const imac, std::string const ipAddr, int const portNum, Aircraft* userAc) :
 	myMac(mmac), intruderMac(imac), ip(ipAddr), port(portNum)
 {
@@ -33,6 +35,7 @@ ResolutionConnection::ResolutionConnection(std::string const mmac, std::string c
 	CreateThread(NULL, 0, task, (void*) this, 0, &threadID);
 }
 
+//deconstructor 
 ResolutionConnection::~ResolutionConnection()
 {
 	running_ = false;
@@ -161,7 +164,8 @@ DWORD ResolutionConnection::senseSender()
 }
 
 
-// resolveSense 
+// resolveSense
+//sub method 
 void ResolutionConnection::resolveSense()
 {
 	char msg[256]; // buffer

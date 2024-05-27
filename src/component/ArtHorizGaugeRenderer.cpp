@@ -12,14 +12,23 @@ float const AHGaugeRenderer::gaugePosTop_ = 256.0f;
 * Note that bot the outer and inner gauge are intended to be squares, so the width is equal to the height.
 * The gauge corner is a small square used to "round" the edges of the inner gauge somewhat.
 * */
+
+//fidning the boundings for the gauge width and height
 float const AHGaugeRenderer::paddingHeight = 35.0f;
 float const AHGaugeRenderer::outerGaugeHeight = gaugePosTop_ - gaugePosBot_;
 float const AHGaugeRenderer::innerGaugeHeight = (outerGaugeHeight)*5.0f / 9.0f;
+
+//bellow line is just finding which one is larger outerGaugeHeight or innerGaugeHeight for right side
 float const AHGaugeRenderer::outerGaugeWidthRight = ((outerGaugeHeight / 2.0f) >= (innerGaugeHeight / 2.0f + 2.0f*paddingHeight)) ? (outerGaugeHeight / 2.0f) : (innerGaugeHeight / 2.0f + 2.0f*paddingHeight);
+
+//bellow line is just finding which one is larger outerGaugeHeight or innerGaugeHeight for the left side
 float const AHGaugeRenderer::outerGaugeWidthLeft = ((outerGaugeHeight / 2.0f) >= (innerGaugeHeight / 2.0f + paddingHeight)) ? (outerGaugeHeight / 2.0f) : (innerGaugeHeight / 2.0f + paddingHeight);
+
+//more finding points for the gauge
 float const AHGaugeRenderer::artHorizHeight = 0.9f*innerGaugeHeight*sqrt(2.0f);
 float const AHGaugeRenderer::gaugeCornerHeight = 0.1f*innerGaugeHeight*sqrt(2.0f);
 
+//fidning center point for the gauge
 float const AHGaugeRenderer::gaugeCenterX_ = (gaugePosRight_ + gaugePosLeft_) / 2.0f + paddingHeight;
 float const AHGaugeRenderer::gaugeCenterY_ = (gaugePosTop_ + gaugePosBot_) / 2.0f;
 
@@ -34,6 +43,8 @@ float const AHGaugeRenderer::gaugeCenterY_ = (gaugePosTop_ + gaugePosBot_) / 2.0
 float const AHGaugeRenderer::gaugeViewingAngle = 180.0f;
 float const AHGaugeRenderer::separationAngleY = 10.0f;
 float const AHGaugeRenderer::dyHorizon = (gaugePosTop_ - gaugePosBot_) / (gaugeViewingAngle / separationAngleY);
+
+//constants
 float const AHGaugeRenderer::PI = 3.1415927f;
 float const AHGaugeRenderer::smallSeparationAngleTheta = 5.0f;
 float const AHGaugeRenderer::largeSeparationAngleTheta = 15.0f;
@@ -50,6 +61,7 @@ float const AHGaugeRenderer::planeRollIndicatorWidth = 5.0f;
 /*
 * Note that rvs stands for recommended vertical speed. These outline the perimeter of the RVS Gauge.
 * */
+//finding pixel/screen location for the RVS gauge
 float const AHGaugeRenderer::rvsLeft = (outerGaugeWidthRight - innerGaugeHeight / 2.0f) / 2.0f + innerGaugeHeight / 2.0f + 5.0f;
 float const AHGaugeRenderer::rvsRight = outerGaugeWidthRight - 5.0f;
 float const AHGaugeRenderer::rvsTopHigh = innerGaugeHeight / 2.0f;
@@ -58,15 +70,21 @@ float const AHGaugeRenderer::rvsBottomLow = -innerGaugeHeight / 2.0f;
 float const AHGaugeRenderer::rvsBottomHigh = rvsBottomLow + (rvsRight - rvsLeft)*tan(PI / 6.0);
 float const AHGaugeRenderer::fpmToPixelsLeft = abs(rvsTopHigh - rvsBottomLow) / abs(maxVertSpeed - minVertSpeed);
 float const AHGaugeRenderer::fpmToPixelsRight = abs(rvsTopLow - rvsBottomHigh) / abs(maxVertSpeed - minVertSpeed);
+
+//constant
 float const AHGaugeRenderer::rvsDivisions = 16;
 
 /*
 * Constant parameters for the TCAS's altimeter.
 * */
+
+//fidning gauge position
 float const AHGaugeRenderer::altimeterLeft = innerGaugeHeight / 2.0f + 5.0f;
 float const AHGaugeRenderer::altimeterRight = (outerGaugeWidthRight - innerGaugeHeight / 2.0f) / 2.0f + innerGaugeHeight / 2.0f - 5.0f;
 float const AHGaugeRenderer::altimeterTop = innerGaugeHeight / 2.0f;
 float const AHGaugeRenderer::altimeterBottom = -innerGaugeHeight / 2.0f;
+
+//display altimeter 
 float const AHGaugeRenderer::altimeterDisplayLeft = altimeterLeft + 5.0f;
 float const AHGaugeRenderer::altimeterDisplayMid = altimeterRight;
 float const AHGaugeRenderer::altimeterDisplayRight = altimeterRight + 7.0f;
@@ -74,11 +92,15 @@ float const AHGaugeRenderer::altimeterDisplayTopLow = .1f*innerGaugeHeight / 2.0
 float const AHGaugeRenderer::altimeterDisplayTopHigh = altimeterDisplayTopLow + 3.0f;
 float const AHGaugeRenderer::altimeterDisplayBottomHigh = -altimeterDisplayTopLow;
 float const AHGaugeRenderer::altimeterDisplayBottomLow = -altimeterDisplayTopHigh;
+
+//display icon
 float const AHGaugeRenderer::altimeterDisplayTriangleLeft = altimeterLeft;
 float const AHGaugeRenderer::altimeterDisplayTriangleRight = altimeterDisplayLeft;
 float const AHGaugeRenderer::altimeterDisplayTriangleTop = .5f*altimeterDisplayTopLow;
 float const AHGaugeRenderer::altimeterDisplayTriangleMid = 0.0f;
 float const AHGaugeRenderer::altimeterDisplayTriangleBottom = -altimeterDisplayTriangleTop;
+
+//constants
 float const AHGaugeRenderer::altimeterRange = 1000.0f;
 float const AHGaugeRenderer::altimeterDivisions = 10;
 float const AHGaugeRenderer::da = altimeterRange / altimeterDivisions;
@@ -88,6 +110,8 @@ float const AHGaugeRenderer::dyAltimeter = da*altToPixels;
 /*
 * Constant parameters for the TCAS's airspeed gauge.
 * */
+
+//alot of the same as above gauge placement, dispaly placement, 
 float const AHGaugeRenderer::airspeedGaugeLeft = -innerGaugeHeight / 2.0f - paddingHeight + 5.0f;
 float const AHGaugeRenderer::airspeedGaugeRight = -innerGaugeHeight / 2.0f - 5.0f;
 float const AHGaugeRenderer::airspeedGaugeTop = innerGaugeHeight / 2.0f;
@@ -117,7 +141,7 @@ const double AHGaugeRenderer::gaugeInnerCircleRadiusPxls_ = 150.0;
 Distance const AHGaugeRenderer::gaugeInnerCircleRadius_{ 30.0 , Distance::DistanceUnits::NMI };
 Distance const AHGaugeRenderer::aircraftToGaugeCenterOffset_{ (28.0 / (2.0 * gaugeInnerCircleRadiusPxls_)) * gaugeInnerCircleRadius_.toFeet() * 2.0, Distance::DistanceUnits::FEET };
 
-
+//displaying TA and RA
 Distance const AHGaugeRenderer::advisoryRadiusNMi{ 30.0 , Distance::DistanceUnits::NMI };
 float const AHGaugeRenderer::advisoryRadiusPixels = innerGaugeHeight;
 float const AHGaugeRenderer::advisoryViewAngleX = 150.0f;
@@ -138,27 +162,31 @@ float const AHGaugeRenderer::innerGaugeHeight = artHorizHeight*sqrt(2.0f) - 2.0f
 float const AHGaugeRenderer::gaugeCornerHeight = 0.1f*innerGaugeHeight*sqrt(2.0f);
 */
 
-
+//more misc gauge icons
 float const AHGaugeRenderer::needlePosLeft_ = gaugePosLeft_ + 125.0f;
 float const AHGaugeRenderer::needlePosRight_ = needlePosLeft_ + 8.0f;
 float const AHGaugeRenderer::needlePosBot_ = gaugePosBot_ + 123.0f;
 float const AHGaugeRenderer::needlePosTop_ = needlePosBot_ + 80.0f;
 
+//mins and max constants
 double const AHGaugeRenderer::minVertSpeed = -4000.0;
 double const AHGaugeRenderer::maxVertSpeed = 4000.0;
 
+//constants
 double const AHGaugeRenderer::maxVSpeedDegrees = 150.0;
 float const AHGaugeRenderer::glAngleOffset_ = 90.0f;
 
+//needle change speeds, constant for moving of the needle
 float const AHGaugeRenderer::needleTranslationX_ = needlePosLeft_ + ((needlePosRight_ - needlePosLeft_) / 2.0f);
 float const AHGaugeRenderer::needleTranslationY_ = needlePosBot_ + 5.0f;
 
+//constants
 double const AHGaugeRenderer::diskInnerRadius_ = 75.0;
 double const AHGaugeRenderer::diskOuterRadius_ = 105.0;
 int const AHGaugeRenderer::diskSlices_ = 32;
 int const AHGaugeRenderer::diskLoops_ = 2;
 
-
+//constructor
 AHGaugeRenderer::AHGaugeRenderer(char const * const appPath, Decider * const decider, Aircraft * const userAircraft, concurrency::concurrent_unordered_map<std::string, Aircraft*> * const intrudingAircraft) :
 	appPath_(appPath), decider_(decider), userAircraft_(userAircraft), intruders_(intrudingAircraft) {
 	quadric_ = gluNewQuadric();
@@ -169,17 +197,21 @@ AHGaugeRenderer::AHGaugeRenderer(char const * const appPath, Decider * const dec
 	gluQuadricOrientation(quadric_, GLU_INSIDE);
 }
 
+//not sure about this one (maybe a deconstructor)
 AHGaugeRenderer::~AHGaugeRenderer() {
 	gluDeleteQuadric(quadric_);
 }
 
+//loads all textures and puts them in the fnameBuf
 void AHGaugeRenderer::loadTextures()
 {
 	char fNameBuf[256];
 
+	//for every Gauge id in the ArtHorizTextureConstants.hpp object load the texture and save it the fnamebuf array
 	for (int texId = ahtextureconstants::GAUGE_ID; texId < ahtextureconstants::K_NUM_TEXTURES; texId++) {
 		strutil::buildFilePath(fNameBuf, ahtextureconstants::K_GAUGE_FILENAMES[texId], appPath_);
 
+		//error handling
 		if (strlen(fNameBuf) > 0 && !loadTexture(fNameBuf, texId)) {
 			char debugBuf[256];
 			snprintf(fNameBuf, 256, "AHGaugeRenderer::LoadTextures - failed to load texture at: %s\n", fNameBuf);
@@ -188,9 +220,11 @@ void AHGaugeRenderer::loadTextures()
 	}
 }
 
-
+//loads a indavidual texture given a texPath and int TexID
 bool AHGaugeRenderer::loadTexture(char* texPath, int texId) const {
 	bool loadedSuccessfully = false;
+
+	//BITMAPSSS!!!!!
 
 	BmpLoader::ImageData sImageData;
 	/// Get the bitmap from the file
@@ -214,6 +248,7 @@ bool AHGaugeRenderer::loadTexture(char* texPath, int texId) const {
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	}
 
+
 	if (sImageData.pData)
 		free(sImageData.pData);
 
@@ -223,6 +258,7 @@ bool AHGaugeRenderer::loadTexture(char* texPath, int texId) const {
 void AHGaugeRenderer::render(ahtextureconstants::GlRgb8Color cockpitLighting) {
 	userAircraft_->lock.lock();
 
+	//getting data from the user Aircraft
 	LLA const userPos = userAircraft_->positionCurrent;
 	Angle const userHeading = userAircraft_->heading;
 	Velocity const userAircraftVerticalVelocity = userAircraft_->verticalVelocity;
@@ -230,7 +266,7 @@ void AHGaugeRenderer::render(ahtextureconstants::GlRgb8Color cockpitLighting) {
 	Angle const userTheta = userAircraft_->theta;
 	Angle const userPhi = userAircraft_->phi;
 
-	userAircraft_->lock.unlock();
+	userAircraft_->lock.unlock(); //more concurency!!
 
 	XPLMSetGraphicsState(0/*Fog*/, 1/*TexUnits*/, 0/*Lighting*/, 0/*AlphaTesting*/, 1/*AlphaBlending*/, 0/*DepthTesting*/, 0/*DepthWriting*/);
 	//Enable colors for shading the gauge
@@ -253,17 +289,21 @@ void AHGaugeRenderer::render(ahtextureconstants::GlRgb8Color cockpitLighting) {
 		LLA gaugeCenterPos = userPos.translate(&userHeading, &aircraftToGaugeCenterOffset_);
 
 		for (; iter != intruders_->cend(); ++iter) {
-			Aircraft* intruder = iter->second;
+			Aircraft* intruder = iter->second; //get intruder
 
-			intruder->lock.lock();
+			intruder->lock.lock();  //concurency
+
+			//get info of intruder
 			LLA const intruderPos = intruder->positionCurrent;
 			Distance const altDiff = intruderPos.altitude - intruder->positionOld.altitude;
 			std::chrono::milliseconds const altTimeDiff = intruder->positionCurrentTime - intruder->positionOldTime;
 			Aircraft::ThreatClassification threatClass = intruder->threatClassification;
 			intruder->lock.unlock();
 
+			//getting distance object called range from guage center to intruder position
 			Distance range = gaugeCenterPos.range(&intruderPos);
 
+			//uses the converter class
 			if (range.toFeet() < gaugeInnerCircleRadius_.toFeet() * 2) {
 				Velocity const intrVvel = Velocity((altDiff.toFeet() / (double)altTimeDiff.count()) * millisecondsPerMinute_, Velocity::VelocityUnits::FEET_PER_MIN);
 				drawIntrudingAircraft(&intruderPos, &intrVvel, &userHeading, &gaugeCenterPos, &range, threatClass);
@@ -285,6 +325,7 @@ void AHGaugeRenderer::render(ahtextureconstants::GlRgb8Color cockpitLighting) {
 
 }
 
+//getting some preset text sizes and styles from the arthorizonconstatns file
 ahtextureconstants::TexCoords const * AHGaugeRenderer::gaugeTexCoordsFromDigitCharacter(char c) const {
 	switch (c) {
 	case '0':
@@ -320,6 +361,7 @@ void AHGaugeRenderer::drawTextureRegion(ahtextureconstants::TexCoords const * te
 	//glPushMatrix();
 	//glTranslatef(gaugeCenterX_, gaugeCenterY_, 0.0f);
 
+	//using this glTextCoord2d class to draw a texture region
 	glBegin(GL_QUADS);
 	glTexCoord2d(texCoords->left, texCoords->top); glVertex2d(vertLeft, vertTop);
 	glTexCoord2d(texCoords->right, texCoords->top); glVertex2d(vertRight, vertTop);
@@ -329,6 +371,7 @@ void AHGaugeRenderer::drawTextureRegion(ahtextureconstants::TexCoords const * te
 	//glPopMatrix();
 }
 
+//given a threatClass and using the ahtextureconstants determine the symbol for it from its threat class
 ahtextureconstants::TexCoords const * AHGaugeRenderer::aircraftSymbolFromThreatClassification(Aircraft::ThreatClassification threatClass) {
 	switch (threatClass) {
 	case Aircraft::ThreatClassification::NON_THREAT_TRAFFIC:
@@ -345,6 +388,7 @@ ahtextureconstants::TexCoords const * AHGaugeRenderer::aircraftSymbolFromThreatC
 	}
 }
 
+//given a threatclass and using the ahtexture constants get the correct colour 
 ahtextureconstants::GlRgb8Color const * AHGaugeRenderer::symbolColorFromThreatClassification(Aircraft::ThreatClassification threatClass) {
 	switch (threatClass) {
 	case Aircraft::ThreatClassification::NON_THREAT_TRAFFIC:
@@ -360,7 +404,10 @@ ahtextureconstants::GlRgb8Color const * AHGaugeRenderer::symbolColorFromThreatCl
 	}
 }
 
+//drawing horizon
 void AHGaugeRenderer::drawHorizon(Angle theta, Angle phi) const {
+
+	//local vars
 	double phiDegrees = phi.toDegrees();
 	float gaugeRadius;
 	float horizPosMid;
@@ -371,6 +418,7 @@ void AHGaugeRenderer::drawHorizon(Angle theta, Angle phi) const {
 	float cornerHalfDiagonal = 0.5f*gaugeCornerHeight*sqrt(2.0f);
 	int count;
 
+	//determining when to use cos or sin
 	if (((-45.0 <= phiDegrees) && (phiDegrees <= 45.0))
 		|| ((-180.0 <= phiDegrees) && (phiDegrees <= -135.0))
 		|| ((135.0 <= phiDegrees) && (phiDegrees <= 180.0))) {
@@ -382,6 +430,7 @@ void AHGaugeRenderer::drawHorizon(Angle theta, Angle phi) const {
 
 	horizPosMid = gaugeRadius - ((theta.toDegrees() + 90.0f) / 180.0f) * 2.0f*gaugeRadius;
 
+	//again using the gl functions
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_LIGHTING);
 
@@ -391,6 +440,7 @@ void AHGaugeRenderer::drawHorizon(Angle theta, Angle phi) const {
 	glTranslatef(gaugeCenterX_, gaugeCenterY_, 0.0f);
 	glRotatef(phi.toDegrees(), 0.0f, 0.0f, 1.0f);
 
+	//actual drawing
 	glBegin(GL_QUADS);
 	/* Light Blue -- Sky */
 	glColor4f(77.0f / 255.0f, 121.0f / 255.0f, 255.0f / 255.0f, 1.0f);
@@ -426,6 +476,7 @@ void AHGaugeRenderer::drawHorizon(Angle theta, Angle phi) const {
 	y = horizPosMid;
 	count = 0;
 
+	//drawing the lines for artifical horizon gauge
 	while (y <= gaugeRadius) {
 		if ((count % 2) == 0) {
 			glVertex2d(-halfLargeLineLength, y);
@@ -442,6 +493,7 @@ void AHGaugeRenderer::drawHorizon(Angle theta, Angle phi) const {
 	y = horizPosMid - dyHorizon;
 	count = 1;
 
+	//drawing the vertical lines
 	while (y >= -gaugeRadius) {
 		if ((count % 2) == 0) {
 			glVertex2d(-halfLargeLineLength, y);
@@ -459,7 +511,9 @@ void AHGaugeRenderer::drawHorizon(Angle theta, Angle phi) const {
 	count = 1;
 
 	while (count < 7) {
+		//if even then
 		if ((count % 2) == 0) {
+			// find/draw the large line lengths
 			float angle = startingAngle + dTheta_small*count;
 			float x1 = gaugeRadius*cos(angle);
 			float y1 = gaugeRadius*sin(angle);
@@ -478,7 +532,9 @@ void AHGaugeRenderer::drawHorizon(Angle theta, Angle phi) const {
 			glVertex2d(x1, y1);
 			glVertex2d(x2, y2);
 		}
+		//if odd then
 		else {
+			// find/draw the small line lengths
 			float angle = startingAngle + dTheta_small*count;
 			float x1 = gaugeRadius*cos(angle);
 			float y1 = gaugeRadius*sin(angle);
@@ -599,12 +655,13 @@ void AHGaugeRenderer::drawHorizon(Angle theta, Angle phi) const {
 	glEnable(GL_LIGHTING);
 	glPopMatrix();
 }
-
+//drawing the outer gauge texture region
 void AHGaugeRenderer::drawOuterGauge() const {
 	XPLMBindTexture2d(glTextures_[ahtextureconstants::GAUGE_ID], 0);
 	drawTextureRegion(&ahtextureconstants::K_OUTER_GAUGE, gaugePosLeft_, gaugePosRight_, gaugePosTop_, gaugePosBot_);
 }
 
+//drawing inner gauge texture region
 void AHGaugeRenderer::drawInnerGaugeVelocityRing() const {
 	drawTextureRegion(&ahtextureconstants::K_INNER_GAUGE, gaugePosLeft_, gaugePosRight_, gaugePosTop_, gaugePosBot_);
 }
@@ -636,8 +693,11 @@ void AHGaugeRenderer::drawVerticalVelocityNeedle(Velocity const userAircraftVert
 
 void AHGaugeRenderer::drawRecommendedVerticalSpeedGauge(Velocity verticalVelocity) const {
 	decider_->recommendationRangeLock.lock();
+	
+	//getting data
 	RecommendationRange positive = decider_->positiveRecommendationRange;
 	RecommendationRange neg = decider_->negativeRecommendationRange;
+
 	decider_->recommendationRangeLock.unlock();
 
 	drawVerticalSpeedGaugeBackground();
@@ -653,6 +713,7 @@ void AHGaugeRenderer::drawRecommendedVerticalSpeedGauge(Velocity verticalVelocit
 }
 
 void AHGaugeRenderer::drawVerticalSpeedGaugeBackground() const {
+//using gl draw the gauge backgound
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_LIGHTING);
 	glMatrixMode(GL_MODELVIEW);
@@ -746,6 +807,7 @@ void AHGaugeRenderer::drawVerticalSpeedGaugeGraduations() const {
 		float theta = atan(abs(y1) / h);
 		float a, b;
 
+		//simialr as above even large line odd small line
 		if ((count % 2) == 0) {
 			/* Large line */
 			a = largeLineLength*sin(theta);
@@ -760,6 +822,7 @@ void AHGaugeRenderer::drawVerticalSpeedGaugeGraduations() const {
 		x2 = x1 + b;
 		y2 = (v < 0) ? (y1 + a) : (y1 - a);
 
+		//set the vertexes
 		glVertex2d(x1, y1);
 		glVertex2d(x2, y2);
 
@@ -942,7 +1005,7 @@ void AHGaugeRenderer::writeAltitude(float currentAltitude) const {
 		((altimeterDisplayTopLow - altimeterDisplayBottomHigh) / 2.0 + altimeterDisplayBottomHigh), true);
 }
 
-
+//calling sub methods written bellow
 void AHGaugeRenderer::drawAirspeedGauge(float currentAirspeed) const {
 	drawAirspeedGaugeBackground();
 	drawAirspeedGaugeGraduations(currentAirspeed);
@@ -950,6 +1013,7 @@ void AHGaugeRenderer::drawAirspeedGauge(float currentAirspeed) const {
 	writeAirspeed(currentAirspeed);
 }
 
+//called in drawAirspeedgauge
 void AHGaugeRenderer::drawAirspeedGaugeBackground() const {
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_LIGHTING);
@@ -973,6 +1037,7 @@ void AHGaugeRenderer::drawAirspeedGaugeBackground() const {
 	glPopMatrix();
 }
 
+//called in drawAirspeedgauge
 void AHGaugeRenderer::drawAirspeedGaugeGraduations(float currentAirspeed) const {
 	float r = remainderf(currentAirspeed, ds);
 	float y;
@@ -1017,6 +1082,7 @@ void AHGaugeRenderer::drawAirspeedGaugeGraduations(float currentAirspeed) const 
 	glPopMatrix();
 }
 
+//called in drawairspeedgauge
 void AHGaugeRenderer::drawAirspeedGaugeIndicator(float currentAirspeed) const {
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_LIGHTING);
@@ -1083,11 +1149,13 @@ void AHGaugeRenderer::drawAirspeedGaugeIndicator(float currentAirspeed) const {
 	glPopMatrix();
 }
 
+//called in drawairspeedgauge
 void AHGaugeRenderer::writeAirspeed(float currentAirspeed) const {
 	writeNumber((int)roundf(currentAirspeed), airspeedGaugeDisplayRight,
 		((airspeedGaugeDisplayTopLow - airspeedGaugeDisplayBottomHigh) / 2.0 + airspeedGaugeDisplayBottomHigh), false);
 }
 
+//called in the above method and a method farther up
 void AHGaugeRenderer::writeNumber(int number, double borderPositionX, double centerPositionY, bool leftBorder) const {
 	double charLeft, charRight, charBottom, charTop;
 	ahtextureconstants::TexCoords const * signChar = number < 0.0 ? &ahtextureconstants::K_CHAR_MINUS_SIGN : &ahtextureconstants::K_CHAR_PLUS_SIGN;
@@ -1155,6 +1223,7 @@ void AHGaugeRenderer::writeNumber(int number, double borderPositionX, double cen
 	glPopMatrix();
 }
 
+//takes in pointers to all the intruders airfract data, velcoity, angle, ditance,postion and the user heading, and threat class
 void AHGaugeRenderer::drawIntrudingAircraft(LLA const * const intruderPos, Velocity const * const intruderVvel, Angle const * const userHeading, LLA const * const gaugeCenterPos, Distance const * const range, Aircraft::ThreatClassification threatClass) const {
 	// These lines makes the gauge display intruders relative to the user's heading
 	Angle bearing = gaugeCenterPos->bearing(intruderPos) - *userHeading;
@@ -1196,6 +1265,7 @@ void AHGaugeRenderer::drawIntrudingAircraft(LLA const * const intruderPos, Veloc
 		/* White -- Characters drawn in display boxes */
 		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
+		//actual draw/render using gl
 		glBegin(GL_QUADS);
 
 		glNormal3f(0.0, 0.0f, 1.0f);
@@ -1208,6 +1278,7 @@ void AHGaugeRenderer::drawIntrudingAircraft(LLA const * const intruderPos, Veloc
 		glTexCoord2d(symbolCoords->left, symbolCoords->bottom);
 		glVertex2d(symbolLeft, symbolBottom);
 
+		//find altitude ditance from center of gauge to intruder
 		Distance altitudeDifference = intruderPos->altitude - gaugeCenterPos->altitude;
 		int altDiffHundredsFtPerMin = (int)round(altitudeDifference.toFeet() / 100.0);
 

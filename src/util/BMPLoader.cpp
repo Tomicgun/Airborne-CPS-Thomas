@@ -1,5 +1,6 @@
 #include "BMPLoader.h"
 
+//bit map loader
 int BmpLoader::loadBmp(const char * filePath, ImageData * imageData)
 {
 	char debugStringBuf[256];

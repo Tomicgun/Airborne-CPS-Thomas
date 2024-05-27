@@ -10,8 +10,10 @@ const double Distance::kMilesPerFt_ = 0.0001893939;
 
 const Distance Distance::ZERO = Distance(0.0, DistanceUnits::FEET);
 
+//constructor
 Distance::Distance(double val, Distance::DistanceUnits units) : valueFt_{ feetFromUnits(val, units) } {};
 
+//convert NMI|Miles|METERS into feet helper method
 double Distance::unitsFromFeet(double val, Distance::DistanceUnits units) {
 	switch (units) {
 	case DistanceUnits::MILES:
@@ -25,6 +27,7 @@ double Distance::unitsFromFeet(double val, Distance::DistanceUnits units) {
 	}
 }
 
+//converting feet into NMI|MILES|METERS
 double Distance::feetFromUnits(double val, Distance::DistanceUnits units) {
 	switch (units) {
 	case DistanceUnits::MILES:
@@ -38,26 +41,32 @@ double Distance::feetFromUnits(double val, Distance::DistanceUnits units) {
 	}
 }
 
+//returns feet (ewwww)
 double Distance::toFeet() const {
 	return valueFt_;
 }
 
+//returns feet converted into meters
 double Distance::toMeters() const {
 	return valueFt_ * kMetersPerFt_;
 }
 
+//returns feet converted into miles
 double Distance::toMiles() const {
 	return valueFt_ * kMilesPerFt_;
 }
 
+//returns feet converted into NMI
 double Distance::toNmi() const {
 	return valueFt_ * kNmiPerFt_;
 }
 
+//convert feet into some provided units
 double Distance::toUnits(Distance::DistanceUnits units) const {
 	return unitsFromFeet(valueFt_, units);
 }
 
+//defining operators 
 Distance Distance::operator + (Distance const & d) const { 
 	return Distance(valueFt_ + d.valueFt_, DistanceUnits::FEET);
 }

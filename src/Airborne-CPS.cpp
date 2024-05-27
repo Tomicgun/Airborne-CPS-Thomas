@@ -143,13 +143,18 @@ static bool hostile = false;
 static char gVSIPluginDataFile[255];
 static char gAHPluginDataFile[255];
 
+//in component package
 Aircraft* userAircraft;
 
+//in component package
 VSIGaugeRenderer* vsiGaugeRenderer;
 AHGaugeRenderer* ahGaugeRenderer;
 
+//concurrent map from string to air craft and string to Res connection
 concurrency::concurrent_unordered_map<std::string, Aircraft*> intrudingAircraft;
 concurrency::concurrent_unordered_map<std::string, ResolutionConnection*> openConnections;
+
+//creates a transponder/decider object
 Transponder* transponder;
 
 Decider* decider;
@@ -188,12 +193,14 @@ float verticalSpeedData = 0;
 float latREF, lonREF = 0;
 float ilatREF, ilonREF = 0;
 
+//prototyping three methods
 static void myDrawWindowCallback(XPLMWindowID inWindowID, void* inRefcon);
 
 static void myHandleKeyCallback(XPLMWindowID inWindowID, char inKey, XPLMKeyFlags inFlags, char inVirtualKey, void* inRefcon, int losingFocus);
 
 static int myHandleMouseClickCallback(XPLMWindowID inWindowID, int x, int y, XPLMMouseStatus inMouse, void* inRefcon);
 
+//start of the plugin where all the magic happens
 PLUGIN_API int XPluginStart(char* outName, char* outSig, char* outDesc) {
 	/// Handle cross platform differences
 #if IBM
@@ -269,7 +276,7 @@ PLUGIN_API int XPluginStart(char* outName, char* outSig, char* outDesc) {
 	std::string myMac = Transponder::getHardwareAddress();
 
 
-
+	//setting up the user aircraft and other needed objects like the transponder
 	LLA currentPos = LLA::ZERO;
 	userAircraft = new Aircraft(myMac, "127.0.0.1", currentPos, Angle::ZERO, Velocity::ZERO, Angle::ZERO, Angle::ZERO);
 	std::chrono::milliseconds msSinceEpoch = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
@@ -278,6 +285,7 @@ PLUGIN_API int XPluginStart(char* outName, char* outSig, char* outDesc) {
 
 	decider = new NASADecider(userAircraft, &openConnections);
 
+	//render the two gauges
 	vsiGaugeRenderer = new VSIGaugeRenderer(gVSIPluginDataFile, decider, userAircraft, &intrudingAircraft);
 	vsiGaugeRenderer->loadTextures();
 
@@ -292,6 +300,7 @@ PLUGIN_API int XPluginStart(char* outName, char* outSig, char* outDesc) {
 	return 1;
 }
 
+//stop the plugin / deconstructor
 PLUGIN_API void	XPluginStop(void) {
 	/// Clean up
 	if (gXBeeMenuItem == 1) {

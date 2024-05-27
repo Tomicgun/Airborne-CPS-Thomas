@@ -1,36 +1,45 @@
 #include "NASADecider.h"
 
+//constructor
 NASADecider::NASADecider(Aircraft* thisAircraft, concurrency::concurrent_unordered_map<std::string, ResolutionConnection*>* connections) {
 	thisAircraft_ = thisAircraft; activeConnections_ = connections; hasRA_ = false;
 }
 
+//deconstructor
 NASADecider::~NASADecider() {}
+
 
 void NASADecider::analyze(Aircraft* intruder) {
 	thisAircraft_->lock.lock();
 	thisAircraftAltitude_ = thisAircraft_->positionCurrent.altitude.toFeet();
 	thisAircraft_->lock.unlock();
 
+	//sub method in this class
 	setSensitivityLevel();
 
 	intruder->lock.lock();
 	Aircraft intrCopy = *(intruder);
 	intruder->lock.unlock();
 
+	//create a connection object in this folder (custom object)
 	ResolutionConnection* connection = (*activeConnections_)[intrCopy.id];
 
+	//another sub method called in this class
 	doCalculations(&intrCopy, connection);
 
+	//creating a threat class object and setting equal to the output of this sub-method define bellow
 	Aircraft::ThreatClassification threatClass = NASADecider::determineThreatClass(&intrCopy, connection);
 	Sense mySense = tempSenseMap_[intrCopy.id];
 
 	RecommendationRange green, red;
 
+	//if threat class needs a resolution advisory then change the sense
 	if (threatClass == Aircraft::ThreatClassification::RESOLUTION_ADVISORY) {
 		connection->lock.lock();
 		if (connection->currentSense == Sense::UPWARD || connection->currentSense == Sense::DOWNWARD) {
 			mySense = connection->currentSense;
 		} else if (tempSenseMap_[intrCopy.id] == Sense::UNKNOWN) {
+			//computing a resolution if there is no resolution
 			tempSenseMap_[intrCopy.id] = mySense = senseutil::senseFromInt(raSense(connection->userPosition.altitude.toFeet(),
 				calculationsMap_[intruder->id].userVSpeed, intrCopy.positionCurrent.altitude.toFeet(), calculationsMap_[intruder->id].intrVSpeed,
 				calculationsMap_[intruder->id].userVSpeed, calculationsMap_[intruder->id].userVAccel, calculationsMap_[intruder->id].deltaTime)); // CHECK TARGET VERTICAL SPEED PARAMETER!!! Flight plan perhaps????
@@ -38,6 +47,8 @@ void NASADecider::analyze(Aircraft* intruder) {
 		}
 		connection->lock.unlock();
 
+		//if the intruder id equals intruder id and has RA then generate a rectangle pair then set some colors
+		//intruder provided and the raIntruderId_. equal the provided intruder and has a RA then generate a new one and set the colors
 		if (raIntruderId_.compare(intruder->id) == 0 && hasRA_) {
 			RecommendationRangePair recRange = getRecRangePair(mySense, calculationsMap_[intruder->id].userVvel, calculationsMap_[intruder->id].intrVvel, calculationsMap_[intruder->id].userPosition.altitude.toFeet(), intrCopy.positionCurrent.altitude.toFeet(), calculationsMap_[intruder->id].modTau);
 			green = recRange.positive;
@@ -47,8 +58,11 @@ void NASADecider::analyze(Aircraft* intruder) {
 			positiveRecommendationRange = green;
 			negativeRecommendationRange = red;
 			recommendationRangeLock.unlock();
+			//if the ra intruder does not equal the provided intruder id then
+			//generating a new range rec pair and if they are not equal 
 		} else if (hasRA_) {
 			RecommendationRangePair recRange = getRecRangePair(mySense, calculationsMap_[intruder->id].userVvel, calculationsMap_[intruder->id].intrVvel, calculationsMap_[intruder->id].userPosition.altitude.toFeet(), intrCopy.positionCurrent.altitude.toFeet(), calculationsMap_[intruder->id].modTau);
+			//internal method call comparing RA's if they are different then do the bellow code of setting colors
 			if (compareRA(recRange.positive) > 0) {
 				raIntruderId_ = intruder->id;
 				green = recRange.positive;
@@ -59,8 +73,12 @@ void NASADecider::analyze(Aircraft* intruder) {
 				negativeRecommendationRange = red;
 				recommendationRangeLock.unlock();
 			}
+		//if the ra does not equal the intruder id and the does not have a RA
+		//most common first run since at the start wont have a rec range pair 
 		} else {
+			//generate rec range pair
 			RecommendationRangePair recRange = getRecRangePair(mySense, calculationsMap_[intruder->id].userVvel, calculationsMap_[intruder->id].intrVvel, calculationsMap_[intruder->id].userPosition.altitude.toFeet(), intrCopy.positionCurrent.altitude.toFeet(), calculationsMap_[intruder->id].modTau);
+			//set has RA true
 			hasRA_ = true;
 			raIntruderId_ = intruder->id;
 			green = recRange.positive;
@@ -72,12 +90,13 @@ void NASADecider::analyze(Aircraft* intruder) {
 			recommendationRangeLock.unlock();
 		}
 		
-
+	//if the threat class in a  non threat then set the sense to unkown
 	} else if (threatClass == Aircraft::ThreatClassification::NON_THREAT_TRAFFIC) {
 		tempSenseMap_[intrCopy.id] = Sense::UNKNOWN;
 		connection->lock.lock();
 		connection->currentSense = Sense::UNKNOWN;
 		connection->lock.unlock();
+		//if it does not have a RA then set it to the corrects colors
 		if (!hasRA_) {
 			red.valid = false;
 			green.valid = false;
@@ -86,6 +105,7 @@ void NASADecider::analyze(Aircraft* intruder) {
 			negativeRecommendationRange = red;
 			recommendationRangeLock.unlock();
 		}
+	//if nots a RA but is not a non threat then run this block and if it does not have a Ra then set colors
 	} else {
 		if (!hasRA_) {
 			recommendationRangeLock.lock();
@@ -101,6 +121,7 @@ void NASADecider::analyze(Aircraft* intruder) {
 
 }
 
+//called in above method just determine if its a RA,TA or non-threat
 Aircraft::ThreatClassification NASADecider::determineThreatClass(Aircraft* intrCopy, ResolutionConnection* conn) {
 
 	Aircraft::ThreatClassification prevThreatClass = intrCopy->threatClassification;
@@ -153,11 +174,13 @@ Aircraft::ThreatClassification NASADecider::determineThreatClass(Aircraft* intrC
 	return newThreatClass;
 }
 
+//this a repeat method in the Decider class
 RecommendationRangePair NASADecider::getRecRangePair(Sense sense, double userVvelFtPerM, double intrVvelFtPerM, double userAltFt,
 	double intrAltFt, double rangeTauS) {
 
 	RecommendationRange positive, negative;
 
+	//if in TA range
 	if (sense != Sense::UNKNOWN && rangeTauS > 0.0) {
 		double alimFt = getAlimFt(userAltFt);
 		double intrProjectedAltAtCpa = intrAltFt + intrVvelFtPerM * (rangeTauS / 60.0);
@@ -202,6 +225,8 @@ int NASADecider::compareRA(RecommendationRange intrRange) {
 		return 0;
 }
 
+
+//really not sure same problem in normal decider
 void NASADecider::setSensitivityLevel() {
 	if (thisAircraftAltitude_ < 1000)
 		sensitivityLevel_ = 2;
@@ -219,6 +244,7 @@ void NASADecider::setSensitivityLevel() {
 		sensitivityLevel_ = 0;
 }
 
+//what is tau? helper method
 int NASADecider::tau(std::string id) {
 	if (taModMap_[id])
 		switch (sensitivityLevel_) {
@@ -239,6 +265,7 @@ int NASADecider::tau(std::string id) {
 		}
 }
 
+//what is alim sub method
 int NASADecider::alim() {
 	switch (sensitivityLevel_) {
 	case 3: return 300;
@@ -250,6 +277,7 @@ int NASADecider::alim() {
 	}
 }
 
+//sub method dependent on sensitivity Level
 double NASADecider::dmod(std::string id) {
 	if (taModMap_[id])
 		switch (sensitivityLevel_) {
@@ -270,6 +298,7 @@ double NASADecider::dmod(std::string id) {
 		}
 }
 
+//same as above comment
 double NASADecider::hmd() {
 	switch (sensitivityLevel_) {
 	case 3: return 0.4;
@@ -280,6 +309,7 @@ double NASADecider::hmd() {
 	}
 }
 
+//same as above method
 double NASADecider::zthr(std::string id) {
 	if (taModMap_[id])
 		switch (sensitivityLevel_) {
@@ -302,25 +332,32 @@ double NASADecider::zthr(std::string id) {
 		}
 }
 
+//getting Horizontal postion based of LLA and dist per degree at that LLA which is variable 
 Vector2 NASADecider::getHorPos(LLA position) {
 	return Vector2(position.distPerDegreeLat().toFeet(), position.distPerDegreeLon().toFeet());
 }
 
+//getting horizontal velocity  based of old and new LLA positions and change in time
 Vector2 NASADecider::getHorVel(LLA position, LLA positionOld, double deltaTime) {
 	return Vector2(position.range(&positionOld), position.bearing(&positionOld)).scalarMult(1 / deltaTime);
 }
 
+//get a vector from user to intruder
 Vector2 NASADecider::getRelativePos(LLA userPos, LLA intrPos) {
 	Distance d = userPos.range(&intrPos);
 	Angle a = userPos.bearing(&intrPos);
 	return Vector2(d, a);
 }
 
+//get a velocity vector based off the relative postion old and new
 Vector2 NASADecider::getRelativeVel(Vector2 relativePos, Vector2 relativePosOld, double deltaTime) {
 	return (relativePos - relativePosOld).scalarMult(1 / deltaTime);
 }
 
+//
 void NASADecider::doCalculations(Aircraft* intrCopy, ResolutionConnection* conn) {
+	
+	//getting data concurency secure
 	conn->lock.lock();
 	calculationsMap_[intrCopy->id].userPosition = conn->userPosition;
 	calculationsMap_[intrCopy->id].userPositionOld = conn->userPositionOld;
@@ -329,6 +366,7 @@ void NASADecider::doCalculations(Aircraft* intrCopy, ResolutionConnection* conn)
 	conn->lock.unlock();
 
 	//get relative pos/vel
+	//using alot of the above methods
 	calculationsMap_[intrCopy->id].userHorPos = getHorPos(calculationsMap_[intrCopy->id].userPosition);
 	calculationsMap_[intrCopy->id].intrHorPos = getHorPos(intrCopy->positionCurrent);
 	calculationsMap_[intrCopy->id].relativeHorPos = getRelativePos(calculationsMap_[intrCopy->id].userPosition, intrCopy->positionCurrent);

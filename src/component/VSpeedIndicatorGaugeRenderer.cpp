@@ -33,7 +33,7 @@ double const VSIGaugeRenderer::kDiskOuterRadius_ = 105.0;
 int const VSIGaugeRenderer::kDiskSlices_ = 32;
 int const VSIGaugeRenderer::kDiskLoops_ = 2;
 
-
+//constructor
 VSIGaugeRenderer::VSIGaugeRenderer(char const * const appPath, Decider * const decider, Aircraft * const userAircraft, concurrency::concurrent_unordered_map<std::string, Aircraft*> * const intrudingAircraft) :
 	appPath_(appPath), decider_(decider), userAircraft_(userAircraft), intruders_(intrudingAircraft) {
 	quadric_ = gluNewQuadric();
@@ -44,6 +44,7 @@ VSIGaugeRenderer::VSIGaugeRenderer(char const * const appPath, Decider * const d
 	gluQuadricOrientation(quadric_, GLU_INSIDE);
 }
 
+//deconstructor
 VSIGaugeRenderer::~VSIGaugeRenderer() {
 	gluDeleteQuadric(quadric_);
 }
