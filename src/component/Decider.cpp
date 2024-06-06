@@ -56,8 +56,10 @@ void Decider::determineActionRequired(Aircraft* intruder) {
 	//if determined threat class equals resolution advisory then determine resolution
 	if (threatClass == Aircraft::ThreatClassification::RESOLUTION_ADVISORY) {
 		connection->lock.lock();
+		//if the sense already says to go up or down no reason to change
 		if (connection->consensusAchieved && (connection->currentSense == Sense::UPWARD || connection->currentSense == Sense::DOWNWARD)) {
 			mySense = connection->currentSense;
+		//if sense is unkown or no solution to the RA is given then determine the sense
 		} else if (tempSense_ == Sense::UNKNOWN) {
 			tempSense_ = mySense = Decider::determineResolutionSense(connection->userPosition.altitude.toUnits(Distance::DistanceUnits::FEET),
 				intrCopy.positionCurrent.altitude.toUnits(Distance::DistanceUnits::FEET));
@@ -125,7 +127,7 @@ Aircraft::ThreatClassification Decider::determineThreatClass(Aircraft* intrCopy,
 	//finding how much elapsed time has occurred
 	double elapsedTimeS = (double)(intrCopy->positionCurrentTime - intrCopy->positionOldTime).count() / 1000;
 
-	//taking change in distance divided by time giving us velocity which is thena converted to knots
+	//taking change in distance divided by time giving us velocity which is then converted to knots
 	double closingSpeedKnots = Velocity(deltaDistanceM / elapsedTimeS, Velocity::VelocityUnits::METERS_PER_S).toUnits(Velocity::VelocityUnits::KNOTS);
 
 	//get difference of altitude in feet between target and user position

@@ -280,9 +280,11 @@ PLUGIN_API int XPluginStart(char* outName, char* outSig, char* outDesc) {
 	LLA currentPos = LLA::ZERO;
 	userAircraft = new Aircraft(myMac, "127.0.0.1", currentPos, Angle::ZERO, Velocity::ZERO, Angle::ZERO, Angle::ZERO);
 	std::chrono::milliseconds msSinceEpoch = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
+	//update user aircraft time
 	userAircraft->positionCurrentTime = msSinceEpoch;
 	userAircraft->positionOldTime = msSinceEpoch;
-
+	
+	//creates a NASA Decider
 	decider = new NASADecider(userAircraft, &openConnections);
 
 	//render the two gauges
@@ -295,6 +297,7 @@ PLUGIN_API int XPluginStart(char* outName, char* outSig, char* outDesc) {
 	// start broadcasting location, and listening for aircraft
 	transponder = new Transponder(userAircraft, &intrudingAircraft, &openConnections, decider);
 	transponder->initXBee(3);  // ******* get this value from the Menu ************
+	//UDP connection starts broadcasting and receiving
 	transponder->start();
 
 	return 1;

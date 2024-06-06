@@ -7,6 +7,7 @@
 std::string Transponder::macAddress_ = "";
 std::atomic<bool> Transponder::initialized_ = false;
 
+//constructor to set all the aircraft and intruders aircraft also setup 
 Transponder::Transponder(Aircraft* ac,
 	concurrency::concurrent_unordered_map<std::string, Aircraft*>* intruders,
 	concurrency::concurrent_unordered_map<std::string, ResolutionConnection*>* connections,
@@ -17,11 +18,14 @@ Transponder::Transponder(Aircraft* ac,
 	intrudersMap = intruders;
 	openConnections = connections;
 
+	//contains a XBee object
 	xb = new XBee();
 	enableXBeeRouting = true;
+	//my location is a macAddress
 	myLocation.setID(macAddress_);
 
 	ip = getIpAddr(); // ip of hardware xbee
+	//set the receiver IP for the transponder
 	myLocation.setIP(ip);
 
 	sinlen = sizeof(struct sockaddr_in);
@@ -49,8 +53,10 @@ Transponder::Transponder(Aircraft* ac,
 	}
 }
 
+//sub method called in the transponder constructor
 void Transponder::createSocket(SOCKET* s, struct sockaddr_in* socketAddr, int addr, int port)
 {
+	//wrapper class to set options and bind the socket with the other socket
 	socketAddr->sin_addr.s_addr = htonl(addr);
 	socketAddr->sin_port = htons(port);
 	socketAddr->sin_family = AF_INET;
@@ -62,6 +68,7 @@ void Transponder::createSocket(SOCKET* s, struct sockaddr_in* socketAddr, int ad
 	}
 }
 
+//deconstructor 
 Transponder::~Transponder()
 {
 	communication = 0;
@@ -83,11 +90,13 @@ DWORD Transponder::receiveLocation()
 {
 
 	std::string myID;
+	//myID is just the mac address
 	myID = myLocation.getID();	// store myID as a C++ string
+
 
 	std::string intruderID;
 
-
+	//this communication method is initalized in the start method 
 	while (communication)
 	{
 
@@ -129,13 +138,13 @@ DWORD Transponder::receiveLocation()
 				XPLMDebugString("Deserialize is not working: ");
 			}
 
-			// get the ID from xplane::Location 
+			// get the ID from x-plane::Location 
 			intruderID = intruderLocation.getID().c_str();
 
 			// process any possible intruder we received via UDP
 			if (strcmp(myID.c_str(), intruderID.c_str()) != 0)  // redundant but fine to keep for now
-			{
-				processIntruder(intruderID);
+			{	
+				processIntruder(intruderID); //sub method that is specfied bellow
 
 				// XBee <-> UDP Routing
 				if (enableXBeeRouting) {
@@ -191,11 +200,11 @@ DWORD Transponder::receiveLocation()
 // processIntruder analyze intruder and user
 DWORD Transponder::processIntruder(std::string intruderID)
 {
-
+	//getting time in miliseconds
 	std::chrono::milliseconds msSinceEpoch = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
 
 
-
+	//getting LLA of the intruder
 	LLA updatedPosition = { intruderLocation.getLAT(), intruderLocation.getLON(), intruderLocation.getALT(), Angle::AngleUnits::DEGREES, Distance::DistanceUnits::METERS };
 
 	Aircraft* intruder = (*intrudersMap)[intruderLocation.getID()];
@@ -227,6 +236,7 @@ DWORD Transponder::processIntruder(std::string intruderID)
 	}
 
 	keepAliveMap_[intruder->id] = 10;  // what does 10 mean here? Why 10? 10 what? Why not 9 or 11000000? Magic number alert!
+									   // So true so true
 
 	// tcp/ip connection
 	ResolutionConnection* conn = (*openConnections)[intruder->id];
@@ -260,6 +270,7 @@ DWORD Transponder::processIntruder(std::string intruderID)
 
 // sendLocation is used in Transponder::startBroadcasting
 // sendLocation sends out udp conection
+// called in start through one of the helper methods
 DWORD Transponder::sendLocation()
 {
 	while (communication)
@@ -276,7 +287,7 @@ DWORD Transponder::sendLocation()
 
 
 		// build the ac
-		myLocation.BuildPlane(); 
+		myLocation.BuildPlane(); //build plane in location class
 
 		int size = myLocation.getPLANE().length() + 1;  // length of the C++ string, plus 1 for the null terminator
 
@@ -325,12 +336,13 @@ DWORD Transponder::sendLocation()
 
 		free(buffer);
 		buffer = nullptr;
-		Sleep(1000);
+		Sleep(1000); //why does it sleep here for 1000 miliseconds? 
 
 	}
 	return 0;
 }
 
+//helper method used to keep the concurrent unordered map fresh and alive
 DWORD Transponder::keepalive()
 {
 	while (communication)
@@ -348,9 +360,10 @@ DWORD Transponder::keepalive()
 	}
 	return 0;
 }
-
+//setting up the macAddress if it is null or empty
 std::string Transponder::getHardwareAddress()
-{
+{	
+	//setup the macAddress
 	if (macAddress_.empty()) {
 		std::string hardwareAddress{};
 		IP_ADAPTER_INFO* pAdapterInfo = (IP_ADAPTER_INFO*)malloc(sizeof(IP_ADAPTER_INFO));
@@ -389,7 +402,7 @@ std::string Transponder::getHardwareAddress()
 	return macAddress_;
 }
 
-// IP adress from UDP
+// IP adress from UDP called in constructor
 std::string Transponder::getIpAddr()
 {
 	SOCKET sock = socket(AF_INET, SOCK_DGRAM, 0); // UDP socket
@@ -434,6 +447,8 @@ std::string Transponder::getIpAddr()
 	return ip;
 }
 
+//bunch of helper methods all called in the start method
+
 static DWORD WINAPI startBroadcasting(void* param)
 {
 	Transponder* t = (Transponder*)param;
@@ -464,6 +479,8 @@ void Transponder::initNetworking()
 }
 
 
+//method to spin up the sockets and the UDP connection
+//used at line 300 of airborne-CPS 
 void Transponder::start()
 {
 	XPLMDebugString(" \nStarting Transponder... \n");
